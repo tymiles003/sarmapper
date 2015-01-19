@@ -1,0 +1,21 @@
+<div class="modal">
+  <ion-header-bar>
+    <h1 class="title">New Operation</h1>
+    <div class="buttons">
+      <button class="button button-clear" ng-click="closeAddOperation()">Close</button>
+    </div>
+  </ion-header-bar>
+  <ion-content>
+    <form ng-submit="doAddOperation()">
+      <div class="list">
+        <label class="item item-input">
+          <span class="input-label">Operation Name</span>
+          <input type="text" ng-model="operationData.name">
+        </label>
+        <label class="item">
+          <button class="button button-block button-positive" type="submit">Add</button>
+        </label>
+      </div>
+    </form>
+  </ion-content>
+</div>

@@ -1,7 +1,7 @@
 'use strict';
 angular.module('SARkit.controllers', [])
 
-.controller('AppCtrl', function($scope, $ionicModal, $timeout) {
+.controller('AppCtrl', function($scope, $ionicModal, $timeout, apiFactory) {
   // Form data for the login modal
   $scope.loginData = {};
 
@@ -9,17 +9,17 @@ angular.module('SARkit.controllers', [])
   $ionicModal.fromTemplateUrl('templates/login.html', {
     scope: $scope
   }).then(function(modal) {
-    $scope.modal = modal;
+    $scope.loginModal = modal;
   });
 
   // Triggered in the login modal to close it
   $scope.closeLogin = function() {
-    $scope.modal.hide();
+    $scope.loginModal.hide();
   },
 
   // Open the login modal
   $scope.login = function() {
-    $scope.modal.show();
+    $scope.loginModal.show();
   };
 
   // Perform the login action when the user submits the login form
@@ -40,19 +40,18 @@ angular.module('SARkit.controllers', [])
   $ionicModal.fromTemplateUrl('templates/addtrack.html', {
     scope: $scope
   }).then(function(modal) {
-    $scope.modal = modal;
+    $scope.trackModal = modal;
   });
-
-  // Triggered in the login modal to close it
-  $scope.closeAddTrack = function() {
-    $scope.modal.hide();
-  },
 
   // Open the login modal
   $scope.addTrack = function() {
     console.log('done')
-    $scope.modal.show();
+    $scope.trackModal.show();
   };
+
+  $scope.closeAddTrack = function() {
+    $scope.trackModal.hide();
+  },
 
   // Perform the login action when the user submits the login form
   $scope.doAddTrack = function() {
@@ -65,6 +64,35 @@ angular.module('SARkit.controllers', [])
     }, 1000);
   }
 
+// Add Operation
+
+  // Form data for the login modal
+  $scope.operationData = {};
+
+  // Create the login modal that we will use later
+  $ionicModal.fromTemplateUrl('templates/addoperation.html', {
+    scope: $scope
+  }).then(function(modal) {
+    $scope.operationModal = modal;
+  });
+
+  // Open the login modal
+  $scope.addOperation = function() {
+    console.log('done')
+    $scope.operationModal.show();
+  };
+
+  $scope.closeAddOperation = function() {
+    $scope.operationModal.hide();
+  },
+
+  // Perform the login action when the user submits the login form
+  $scope.doAddOperation = function() {
+    console.log('Doing login', $scope.operationData);
+
+    apiFactory.addOperation($scope.operationData)
+    $scope.closeAddOperation();
+  }
 
 })
 
@@ -87,21 +115,35 @@ angular.module('SARkit.controllers', [])
 
 })
 
-.controller('OperationsCtrl', function($scope, trackFactory) {
-  $scope.operations = trackFactory.operations();
+.controller('OperationsCtrl', function($scope, apiFactory) {
+  $scope.operations = apiFactory.operations();
+  console.log(angular.fromJson($scope.operations))
 })
 
 .controller('OperationCtrl', function($scope, $stateParams) {
+  var params = $stateParams;
+  $scope.operationId = params.operationId;
 })
 
-.controller('TracksCtrl', function($scope, $stateParams, trackFactory) {
-  $scope.teams = trackFactory.teams('uniqueid123');
+.controller('TracksCtrl', function($scope, apiFactory) {
+  $scope.teams = apiFactory.teams('uniqueid123');
 })
 
-.controller('MapCtrl', function($scope, $ionicLoading, $ionicModal, uiGmapGoogleMapApi, trackFactory) {
-  $scope.map = { center: { latitude: 37.746487, longitude: -119.533346 }, zoom: 8 };
-  $scope.tracks = trackFactory.tracks('uniqueid123');
+.controller('MapCtrl', function($scope, $ionicLoading, $ionicModal, uiGmapGoogleMapApi, apiFactory) {
+  $scope.tracks = apiFactory.tracks('uniqueid123');
+  var opCenter;
+  console.log($scope.tracks)
+
+  apiFactory.operation('uniqueid123').then(function(data) {
+    console.log(data);
+    opCenter = data;
+    $scope.map = { center: { latitude: opCenter.center.latitude, longitude: opCenter.center.longitude }, zoom: 14 };
+  }, function(reason) {
+    alert('Failed: ' + reason);
+  });
+
   uiGmapGoogleMapApi.then(function(maps) {
+
     $scope.centerOnMe = function() {
 
       if(!$scope.map) {
@@ -124,6 +166,9 @@ angular.module('SARkit.controllers', [])
       });
 
     };
-    $scope.test = function(){trackFactory.sendLocation('uniqueid123','uniqueid1','1')};
+    $scope.test = function(){
+      $scope.tracks.push({latitude: 1, longitude: 23})
+    }
+    $scope.test1 = function(){apiFactory.sendLocation('uniqueid123','uniqueid1','1')};
   });
 });

@@ -8,11 +8,12 @@
  * Factory in the tofixtheworldApp.
  */
 angular.module('SARkit')
-  .factory('trackFactory', function ($firebase) {
+  .factory('apiFactory', function ($firebase, $q) {
 
-    var operations = {
+    var operationsTest = {
       uniqueid123: {
         title: 'Kent Lake',
+        id: 'massive-earth-298',
         center: {
           lat: 45.323476,
           lng: -121.672341,
@@ -81,16 +82,64 @@ angular.module('SARkit')
 
     return {
       operations: function(){
+        var sync = $firebase(ref.child("operations"));
+        var operations = sync.$asObject();
         return operations;
       },
       operation: function(operationId){
-        return operations[operationId]
+        var sync = $firebase(ref.child("operations"));
+        var operations = sync.$asObject();
+
+        return $q(function(resolve, reject) {
+          operations.$loaded(function() {
+            resolve(operations[operationId]);
+            console.log(operations[operationId])
+          })
+        });
+
+
+      },
+      addOperation: function(operationData){
+        var sync = $firebase(ref.child("operations"));
+        var latitude;
+        var longitude;
+
+        var upload = function(){
+          var operation = {
+            name: operationData.name,
+            created: new Date().getTime(),
+            center: {
+              latitude: latitude,
+              longitude: longitude
+            }
+          };
+
+        sync.$push(operation).then(function(newChildRef) {
+          console.log("Added operation with id " + newChildRef.key());
+        });
+      }
+
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        latitude = pos.coords.latitude;
+        longitude = pos.coords.longitude;
+        upload();
+      }, function(error) {
+        latitude = 37.746487;
+        longitude = -119.533346;
+        upload();
+      });
+
+
       },
       teams: function(operationId){
-        return operations[operationId].teams;
+        var sync = $firebase(ref.child("operations").child(operationId).child("teams"));
+        var teams = sync.$asArray();
+        return teams;
       },
       tracks: function(operationId){
-        return operations[operationId].teams.uniqueid1.tracks;
+        var sync = $firebase(ref.child("operations").child(operationId).child("teams").child("uniqueid1").child("tracks").child("1"));
+        var tracksObj = sync.$asArray();
+        return tracksObj;
       },
       sendLocation: function(operationId, teamId, trackId){
         var sync = $firebase(ref.child("operations").child(operationId).child("teams").child(teamId).child('tracks').child(trackId))
